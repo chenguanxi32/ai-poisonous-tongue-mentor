@@ -1,3 +1,5 @@
+import os
+os.environ["LANGCHAIN_TRACING_V2"] = "false" # 彻底关掉监控
 import streamlit as st
 import requests
 import os
