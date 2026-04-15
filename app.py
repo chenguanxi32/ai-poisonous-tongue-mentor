@@ -10,6 +10,7 @@ import random
 from datetime import datetime
 
 # ----------------------- RAG记仇向量库相关 ---------------------------
+from langchain_chroma import Chroma
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
