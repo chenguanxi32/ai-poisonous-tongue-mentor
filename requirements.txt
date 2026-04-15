@@ -1,8 +1,10 @@
 streamlit
+requests
+python-docx
+edge-tts
 langchain
 langchain-community
 langchain-openai
 langchain-chroma
+chromadb
 sentence-transformers
-python-docx
-edge-tts
