@@ -6,4 +6,3 @@ langchain-chroma
 sentence-transformers
 python-docx
 edge-tts
-pydantic>=2.0
