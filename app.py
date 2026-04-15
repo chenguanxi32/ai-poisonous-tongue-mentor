@@ -8,8 +8,8 @@ import random
 from datetime import datetime
 
 # ----------------------- RAG记仇向量库相关 ---------------------------
-from langchain.vectorstores import Chroma
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 RAG_VECTOR_DIR = "vector_db_data"
 RAG_EMBED_MODEL = "all-MiniLM-L6-v2"
