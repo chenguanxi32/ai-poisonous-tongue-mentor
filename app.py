@@ -13,7 +13,6 @@ from langchain_chroma import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 RAG_VECTOR_DIR = "vector_db_data"
-# ... 后面代码保持不变
 RAG_EMBED_MODEL = "all-MiniLM-L6-v2"
 
 if "rag_inited" not in st.session_state:
@@ -45,7 +44,7 @@ def rag_add_qa(user_prompt, ai_answer):
     record = f"【用户提问】：{user_prompt}\n【导师回复】：{ai_answer}"
     metadata = {"date": now, "type": "qa"}
     rag_vector_db.add_texts([record], metadatas=[metadata], ids=[doc_id])
-    rag_vector_db.persist()
+    # rag_vector_db.persist()  # 【已弃用】弃用persist()方法
 
 def rag_retrieve_relevant(query, k=3, score_threshold=0.79):
     # 返回 [(内容, 分数, metadata), ...]
@@ -274,38 +273,8 @@ st.caption("做不到，还要问我？——毒舌导师上线，快来感受�
 def get_today_str():
     return datetime.now().strftime("%Y-%m-%d")
 
-# 支持 user_profile 存 stamina/last_reset_date 并适配从旧格式升级
-if "user_profile" not in st.session_state:
-    profile = load_user_profile()
-    if profile:
-        st.session_state.user_profile = profile
-
-# 初始化体力及重置日期，确保 user_profile 里和 session_state 一致
-profile = st.session_state.get("user_profile", {}) or {}
-# 回溯赋予体力
-if "stamina" not in profile or type(profile.get("stamina")) is not int:
-    profile["stamina"] = 10
-if "last_reset_date" not in profile or not isinstance(profile.get("last_reset_date"), str):
-    profile["last_reset_date"] = get_today_str()
-# 检查是否需要重置体力（日期变更）
-today = get_today_str()
-if profile.get("last_reset_date") != today:
-    profile["stamina"] = 10
-    profile["last_reset_date"] = today
-# 保存回 session_state, 并强制与 user_profile.json 同步
-st.session_state.user_profile = profile
-save_user_profile(profile)
-# 把 session_state 也放体力方便后续代码和展示
-if "stamina" not in st.session_state:
-    st.session_state.stamina = profile["stamina"]
-if "last_reset_date" not in st.session_state:
-    st.session_state.last_reset_date = profile["last_reset_date"]
-# 每次同步 user_profile->session_state
-st.session_state.stamina = profile["stamina"]
-st.session_state.last_reset_date = profile["last_reset_date"]
-
-# ------- 用户画像表单 & 数据持久化逻辑 -------
-if "user_profile" not in st.session_state or not st.session_state.user_profile:
+def show_registration_page():
+    """强制注册页面，阻断主程序"""
     with st.form("profile_form", clear_on_submit=False):
         st.markdown("#### 🙍‍♂️ 你的资料-导师不会嘴软，只会更精准打击你")
         user_name = st.text_input("你的名字（必填）", max_chars=10)
@@ -333,6 +302,41 @@ if "user_profile" not in st.session_state or not st.session_state.user_profile:
             else:
                 st.warning("请完整填写所有信息。")
     st.stop()
+
+# --- 初始化用户画像和体力等必须状态（身份验证拦截严格） ---
+def initialize_state_and_profile():
+    # 支持 user_profile 存 stamina/last_reset_date 并适配从旧格式升级
+    if "user_profile" not in st.session_state:
+        profile = load_user_profile()
+        if profile:
+            st.session_state.user_profile = profile
+
+    # 若仍未登录，强制注册页面
+    if "user_profile" not in st.session_state or not st.session_state.user_profile:
+        show_registration_page()
+
+    # 初始化体力及重置日期，确保 user_profile 里和 session_state 一致
+    profile = st.session_state.get("user_profile", {}) or {}
+    if "stamina" not in profile or type(profile.get("stamina")) is not int:
+        profile["stamina"] = 10
+    if "last_reset_date" not in profile or not isinstance(profile.get("last_reset_date"), str):
+        profile["last_reset_date"] = get_today_str()
+    today = get_today_str()
+    if profile.get("last_reset_date") != today:
+        profile["stamina"] = 10
+        profile["last_reset_date"] = today
+
+    st.session_state.user_profile = profile
+    save_user_profile(profile)
+    if "stamina" not in st.session_state:
+        st.session_state.stamina = profile["stamina"]
+    if "last_reset_date" not in st.session_state:
+        st.session_state.last_reset_date = profile["last_reset_date"]
+    st.session_state.stamina = profile["stamina"]
+    st.session_state.last_reset_date = profile["last_reset_date"]
+
+# ---------- 强身份校验入口 ----------
+initialize_state_and_profile()
 
 # 操作到这里一定有用户画像
 user_profile = st.session_state.user_profile
@@ -564,6 +568,10 @@ with st.container():
     st.divider()
 
 # ---- 用户输入，并AI回复（全部存入messages，RAG记仇、翻旧账） ----
+# 强身份校验，严禁未登录访问（防止绕过注册做任何对话、扣费操作）
+if "user_profile" not in st.session_state or not st.session_state.user_profile:
+    show_registration_page()
+
 stamina = st.session_state.get("stamina", 10)
 prompt_disabled = stamina <= 0
 if prompt_disabled:
