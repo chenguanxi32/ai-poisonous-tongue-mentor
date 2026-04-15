@@ -1,8 +1,7 @@
 import os
-os.environ["LANGCHAIN_TRACING_V2"] = "false" # 彻底关掉监控
+os.environ["LANGCHAIN_TRACING_V2"] = "false" 
 import streamlit as st
 import requests
-import os
 import tempfile
 import asyncio
 import json
@@ -11,10 +10,10 @@ from datetime import datetime
 
 # ----------------------- RAG记仇向量库相关 ---------------------------
 from langchain_chroma import Chroma
-from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 RAG_VECTOR_DIR = "vector_db_data"
+# ... 后面代码保持不变
 RAG_EMBED_MODEL = "all-MiniLM-L6-v2"
 
 if "rag_inited" not in st.session_state:
